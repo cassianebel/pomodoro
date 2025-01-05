@@ -8,9 +8,9 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: darkmagenta;
+  background: #0f766e;
   opacity: 1;
-  transition: opacity 2s;
+  transition: all 2s;
 }
 
 .fade-enter {
@@ -27,4 +27,5 @@
 
 .fade-exit-active {
   opacity: 0;
+  background: #6d28d9;
 }
