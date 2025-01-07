@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import PartyMode from "react-confetti";
 import { CSSTransition } from "react-transition-group";
+import CircularProgress from "./Components/CircularProgress";
+import Countdown from "./Components/Countdown";
+import Button from "./Components/Button";
 
 function App() {
   const [totalFocus, setTotalFocus] = useState(1 * 60); // 25 minutes
@@ -99,40 +102,14 @@ function App() {
     return ((timeLeft / totalTime) * 100).toFixed(2);
   };
 
-  const CircularProgress = ({ percentage, strokeColor }) => {
-    const radius = 90;
-    const circumference = 2 * Math.PI * radius;
-    const strokeDashoffset = circumference - (percentage / 100) * circumference;
-
-    return (
-      <svg width={200} height={200}>
-        <circle
-          cx="100"
-          cy="100"
-          r={radius}
-          fill="transparent"
-          stroke="#f8fafc"
-          strokeWidth="4"
-        />
-        <circle
-          cx="100"
-          cy="100"
-          r={radius}
-          fill="transparent"
-          stroke={strokeColor || "#4caf50"}
-          strokeWidth="4"
-          strokeDasharray={circumference}
-          strokeDashoffset={strokeDashoffset}
-          style={{ transition: "stroke-dashoffset 0.35s ease" }}
-        />
-      </svg>
-    );
-  };
-
   return (
     <div
       className={`h-screen p-4 ${
-        isFocus ? "bg-violet-200" : isBreak ? "bg-teal-200" : "bg-slate-50"
+        isFocus
+          ? "bg-gradient-to-b from-violet-200 to-violet-600 text-violet-950"
+          : isBreak
+          ? "bg-gradient-to-b from-teal-200 to-teal-600 text-teal-950"
+          : "bg-gradient-to-b from-slate-200 to-slate-500 text-slate-900"
       }`}
     >
       {showConfetti && (
@@ -157,8 +134,8 @@ function App() {
       >
         <div className="overlay"></div>
       </CSSTransition>
-      <div className="mx-auto w-min">
-        <button className="px-4 py-2 border m-2" onClick={() => toggleTimer()}>
+      <div className="mx-auto w-min flex flex-col items-center font-body">
+        <Button handleClick={toggleTimer}>
           {isRunning
             ? "Pause"
             : isBreak
@@ -166,7 +143,7 @@ function App() {
             : isFocus
             ? "Resume"
             : "Start"}
-        </button>
+        </Button>
 
         <p>Pomodoros Completed: {pomodoros}</p>
         <div className="relative flex justify-center items-center">
@@ -179,7 +156,14 @@ function App() {
 
           <div className="absolute w-40 h-40 rounded-full text-center flex flex-col justify-center items-center mx-auto">
             <p>Focus</p>
-            <p>{formatTime(focusLeft)}</p>
+            {isFocus && (
+              <Countdown
+                percentage={calcPercentage(focusLeft, totalFocus)}
+                timeLeft={focusLeft}
+                fillColor="#4c1d95"
+                baseColor="#8b5cf6"
+              />
+            )}
           </div>
         </div>
         <div className="relative flex justify-center items-center">
@@ -191,11 +175,17 @@ function App() {
           </div>
           <div className="absolute w-40 h-40 rounded-full text-center flex flex-col justify-center items-center mx-auto">
             <p>Break</p>
-            <p>{formatTime(breakLeft)}</p>
+            {isBreak && (
+              <Countdown
+                percentage={calcPercentage(breakLeft, totalBreak)}
+                timeLeft={breakLeft}
+                fillColor="#134e4a"
+                baseColor="#0d9488"
+              />
+            )}
           </div>
         </div>
-
-        <button onClick={resetTimer}>Reset</button>
+        <Button handleClick={resetTimer}>Reset</Button>
       </div>
     </div>
   );

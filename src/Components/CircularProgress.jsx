@@ -1,27 +1,25 @@
-import { useEffect, useState } from "react";
-
-const CircularProgress = ({ percentage }) => {
-  const radius = 50;
+const CircularProgress = ({ percentage, strokeColor }) => {
+  const radius = 90;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
   return (
-    <svg width={120} height={120}>
+    <svg width={200} height={200}>
       <circle
-        cx="60"
-        cy="60"
+        cx="100"
+        cy="100"
         r={radius}
         fill="transparent"
-        stroke="#e6e6e6"
-        strokeWidth="8"
+        stroke="rgb(256 256 256 / 50%)"
+        strokeWidth="4"
       />
       <circle
-        cx="60"
-        cy="60"
+        cx="100"
+        cy="100"
         r={radius}
         fill="transparent"
-        stroke="#4caf50"
-        strokeWidth="8"
+        stroke={strokeColor || "#4caf50"}
+        strokeWidth="4"
         strokeDasharray={circumference}
         strokeDashoffset={strokeDashoffset}
         style={{ transition: "stroke-dashoffset 0.35s ease" }}
@@ -30,22 +28,4 @@ const CircularProgress = ({ percentage }) => {
   );
 };
 
-const Timer = () => {
-  const [timeLeft, setTimeLeft] = useState(100);
-
-  useEffect(() => {
-    if (timeLeft > 0) {
-      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [timeLeft]);
-
-  return (
-    <div>
-      <CircularProgress percentage={timeLeft} />
-      <p>{timeLeft}%</p>
-    </div>
-  );
-};
-
-export default Timer;
+export default CircularProgress;
