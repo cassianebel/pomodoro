@@ -104,12 +104,12 @@ function App() {
 
   return (
     <div
-      className={`h-screen p-4 ${
+      className={`flex flex-col items-center justify-evenly h-screen mx-auto p-4 font-body ${
         isFocus
-          ? "bg-gradient-to-b from-violet-200 to-violet-600 text-violet-950"
+          ? "bg-gradient-to-b from-violet-200 to-violet-400 text-violet-950"
           : isBreak
-          ? "bg-gradient-to-b from-teal-200 to-teal-600 text-teal-950"
-          : "bg-gradient-to-b from-slate-200 to-slate-500 text-slate-900"
+          ? "bg-gradient-to-b from-teal-300 to-teal-100 text-teal-900"
+          : "bg-gradient-to-b from-slate-200 to-slate-400 text-slate-900"
       }`}
     >
       {showConfetti && (
@@ -134,59 +134,58 @@ function App() {
       >
         <div className="overlay"></div>
       </CSSTransition>
-      <div className="mx-auto w-min flex flex-col items-center font-body">
-        <Button handleClick={toggleTimer}>
-          {isRunning
-            ? "Pause"
-            : isBreak
-            ? "Resume"
-            : isFocus
-            ? "Resume"
-            : "Start"}
-        </Button>
 
-        <p>Pomodoros Completed: {pomodoros}</p>
-        <div className="relative flex justify-center items-center">
-          <div className="rotate-[-90deg]">
-            <CircularProgress
+      <Button handleClick={toggleTimer}>
+        {isRunning
+          ? "Pause"
+          : isBreak
+          ? "Resume"
+          : isFocus
+          ? "Resume"
+          : "Start"}
+      </Button>
+
+      <p>Pomodoros Completed: {pomodoros}</p>
+      <div className="relative flex justify-center items-center">
+        <div className="rotate-[-90deg]">
+          <CircularProgress
+            percentage={calcPercentage(focusLeft, totalFocus)}
+            strokeColor="#5b21b6"
+          />
+        </div>
+
+        <div className="absolute w-40 h-40 rounded-full text-center flex flex-col justify-center items-center mx-auto">
+          <p>Focus</p>
+          {isFocus && (
+            <Countdown
               percentage={calcPercentage(focusLeft, totalFocus)}
-              strokeColor="#6d28d9"
+              timeLeft={focusLeft}
+              fillColor="#2e1065"
+              baseColor="#6d28d9"
             />
-          </div>
-
-          <div className="absolute w-40 h-40 rounded-full text-center flex flex-col justify-center items-center mx-auto">
-            <p>Focus</p>
-            {isFocus && (
-              <Countdown
-                percentage={calcPercentage(focusLeft, totalFocus)}
-                timeLeft={focusLeft}
-                fillColor="#4c1d95"
-                baseColor="#8b5cf6"
-              />
-            )}
-          </div>
+          )}
         </div>
-        <div className="relative flex justify-center items-center">
-          <div className="rotate-[-90deg]">
-            <CircularProgress
-              percentage={calcPercentage(breakLeft, totalBreak)}
-              strokeColor="#0d9488"
-            />
-          </div>
-          <div className="absolute w-40 h-40 rounded-full text-center flex flex-col justify-center items-center mx-auto">
-            <p>Break</p>
-            {isBreak && (
-              <Countdown
-                percentage={calcPercentage(breakLeft, totalBreak)}
-                timeLeft={breakLeft}
-                fillColor="#134e4a"
-                baseColor="#0d9488"
-              />
-            )}
-          </div>
-        </div>
-        <Button handleClick={resetTimer}>Reset</Button>
       </div>
+      <div className="relative flex justify-center items-center">
+        <div className="rotate-[-90deg]">
+          <CircularProgress
+            percentage={calcPercentage(breakLeft, totalBreak)}
+            strokeColor="#115e59"
+          />
+        </div>
+        <div className="absolute w-40 h-40 rounded-full text-center flex flex-col justify-center items-center mx-auto">
+          <p>Break</p>
+          {isBreak && (
+            <Countdown
+              percentage={calcPercentage(breakLeft, totalBreak)}
+              timeLeft={breakLeft}
+              fillColor="#042f2e"
+              baseColor="#0f766e"
+            />
+          )}
+        </div>
+      </div>
+      <Button handleClick={resetTimer}>Reset</Button>
     </div>
   );
 }

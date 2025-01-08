@@ -17,7 +17,7 @@ const Countdown = ({ percentage, timeLeft, fillColor, baseColor }) => {
         WebkitBackgroundClip: "text",
         WebkitTextFillColor: "transparent",
         transition: "background-image 0.1s linear",
-        textShadow: "2px 2px 3px rgba(255,255,255,0.3)",
+        textShadow: "2px 2px 3px rgba(255,255,255,0.17)",
       }}
     >
       {formatTime(timeLeft)}
