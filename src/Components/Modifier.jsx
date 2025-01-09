@@ -10,7 +10,7 @@ const Modifier = ({ label, name, value, handleChange }) => {
         name={name}
         value={value / 60}
         onChange={(e) => handleChange(e.target.value * 60)}
-        className="block w-14 p-2 bg-slate-500 bg-opacity-20 shadow-inner rounded-md"
+        className="block min-w-min py-1 px-3 bg-slate-500 bg-opacity-20 shadow-inner-dark rounded-md"
       />
     </div>
   );

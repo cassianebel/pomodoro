@@ -8,5 +8,13 @@ export default {
     },
     extend: {},
   },
-  plugins: [],
+  plugins: [
+    function ({ addUtilities }) {
+      addUtilities({
+        ".shadow-inner-dark": {
+          boxShadow: "inset 1px 1px 3px rgba(0, 0, 0, 0.4)",
+        },
+      });
+    },
+  ],
 };

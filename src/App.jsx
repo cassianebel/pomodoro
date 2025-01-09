@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
+import { Howl } from "howler";
 import PartyMode from "react-confetti";
 import { CSSTransition } from "react-transition-group";
+import { IoVolumeHigh, IoVolumeMute } from "react-icons/io5";
 import CircularProgress from "./Components/CircularProgress";
 import Countdown from "./Components/Countdown";
 import Button from "./Components/Button";
@@ -21,8 +23,36 @@ function App() {
   const [isRunning, setIsRunning] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [fade, setFade] = useState(false);
+  const [volume, setVolume] = useState(0.5);
 
-  const timerRef = useRef(null);
+  const timerRef = useRef(0.5);
+  const popRef = useRef(null);
+  const chimeRef = useRef(null);
+
+  useEffect(() => {
+    popRef.current = new Howl({
+      src: ["./442265__crafty_juggler__pop-sound.mp3"],
+      volume: volume,
+    });
+
+    chimeRef.current = new Howl({
+      src: ["./616696__melokacool__chimes-saved.mp3"],
+      volume: volume,
+    });
+  }, []);
+
+  useEffect(() => {
+    if (popRef.current) {
+      popRef.current.volume(volume);
+    }
+    if (chimeRef.current) {
+      chimeRef.current.volume(volume);
+    }
+  }, [volume]);
+
+  const handleVolumeChange = (e) => {
+    setVolume(e.target.value);
+  };
 
   const toggleTimer = () => {
     setStarted(true);
@@ -33,11 +63,19 @@ function App() {
   };
 
   const endFocusAnimation = () => {
+    if (popRef.current) {
+      popRef.current.play(); // play the pop sound
+      setTimeout(() => popRef.current.stop(), 3000); // Stop the playback after 3 seconds
+    }
     setShowConfetti(true); // Show the confetti
     setTimeout(() => setShowConfetti(false), 5000); // Reset after 5 seconds
   };
 
   const endBreakAnimation = () => {
+    if (chimeRef.current) {
+      chimeRef.current.play(); // play the chime sound
+      setTimeout(() => chimeRef.current.stop(), 3000); // Stop the playback after 3 seconds
+    }
     setFade(true);
     setTimeout(() => setFade(false), 100); // Reset `in` to false after animation
   };
@@ -140,14 +178,29 @@ function App() {
       <div
         className={`flex flex-col items-center justify-between h-screen mx-auto p-4 font-body text-lg transition-all duration-300 ${
           isFocus
-            ? "bg-gradient-to-b from-violet-400 via-violet-200 to-violet-400 text-violet-950"
+            ? "bg-gradient-to-b from-violet-400 via-fuchsia-200 to-violet-400 text-violet-950"
             : isBreak
-            ? "bg-gradient-to-b from-teal-300 via-teal-100 to-teal-300 text-teal-900"
+            ? "bg-gradient-to-b from-teal-300 via-lime-50 to-teal-300 text-teal-900"
             : "bg-gradient-to-b from-slate-400 via-slate-100 to-slate-400 text-slate-900"
         }`}
       >
-        <div className="flex flex-col items-center">
-          <p>Pomodoros Completed: {pomodoros}</p>
+        <div className="flex justify-between w-full">
+          <div>
+            {volume > 0 ? (
+              <IoVolumeHigh className="text-2xl" />
+            ) : (
+              <IoVolumeMute className="text-2xl" />
+            )}
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step=".1"
+              value={volume}
+              onChange={handleVolumeChange}
+              className="rotate-[-90deg] absolute top-24 left-[-40px] "
+            />
+          </div>
           <Button handleClick={toggleTimer}>
             {isRunning
               ? "Pause"
@@ -179,6 +232,8 @@ function App() {
             )}
           </div>
         </div>
+
+        <p>Pomodoros Completed: {pomodoros}</p>
 
         <div className="relative flex justify-center items-center">
           <div className="rotate-[-90deg]">
