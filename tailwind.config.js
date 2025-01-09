@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: "selector",
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     fontFamily: {
@@ -9,6 +10,12 @@ export default {
     extend: {},
   },
   plugins: [
+    function ({ addVariant }) {
+      addVariant("landscape", "@media (orientation: landscape)");
+    },
+    function ({ addVariant }) {
+      addVariant("mozilla", "@supports (-moz-appearance: none)");
+    },
     function ({ addUtilities }) {
       addUtilities({
         ".shadow-inner-dark": {

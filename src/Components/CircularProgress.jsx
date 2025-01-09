@@ -1,4 +1,4 @@
-const CircularProgress = ({ percentage, strokeColor }) => {
+const CircularProgress = ({ percentage, strokeColor, darkMode }) => {
   const radius = 90;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
@@ -10,7 +10,7 @@ const CircularProgress = ({ percentage, strokeColor }) => {
         cy="100"
         r={radius}
         fill="transparent"
-        stroke="rgb(256 256 256 / 50%)"
+        stroke={darkMode ? "rgb(0 0 0 / 50%)" : "rgb(256 256 256 / 50%)"}
         strokeWidth="4"
       />
       <circle

@@ -3,12 +3,14 @@ import { Howl } from "howler";
 import PartyMode from "react-confetti";
 import { CSSTransition } from "react-transition-group";
 import { IoVolumeHigh, IoVolumeMute } from "react-icons/io5";
+import { MdModeNight, MdLightMode } from "react-icons/md";
 import CircularProgress from "./Components/CircularProgress";
 import Countdown from "./Components/Countdown";
 import Button from "./Components/Button";
 import Modifier from "./Components/Modifier";
 
 function App() {
+  const [darkMode, setDarkMode] = useState(false);
   const [started, setStarted] = useState(false);
   const [totalFocus, setTotalFocus] = useState(25 * 60); // 25 minutes
   const [focusLeft, setFocusLeft] = useState(25 * 60); // 25 minutes
@@ -24,6 +26,10 @@ function App() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [fade, setFade] = useState(false);
   const [volume, setVolume] = useState(0.5);
+  const [partyModeDimensions, setPartyModeDimensions] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  });
 
   const timerRef = useRef(0.5);
   const popRef = useRef(null);
@@ -52,6 +58,27 @@ function App() {
 
   const handleVolumeChange = (e) => {
     setVolume(e.target.value);
+  };
+
+  useEffect(() => {
+    if (localStorage.getItem("theme")) {
+      if (localStorage.getItem("theme") === "dark") {
+        setDarkMode(true);
+      } else {
+        setDarkMode(false);
+      }
+    } else if (
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches
+    ) {
+      setDarkMode(true);
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const preference = !darkMode;
+    setDarkMode(!darkMode);
+    localStorage.setItem("theme", preference ? "dark" : "light");
   };
 
   const toggleTimer = () => {
@@ -155,8 +182,20 @@ function App() {
     }
   };
 
+  useEffect(() => {
+    const handleResize = () => {
+      setPartyModeDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   return (
-    <>
+    <div className={`App ${darkMode ? "dark" : "light"}`}>
       {showConfetti && (
         <PartyMode
           recycle={false}
@@ -168,6 +207,8 @@ function App() {
             "#7c3aed",
             "#5b21b6",
           ]}
+          width={partyModeDimensions.width}
+          height={partyModeDimensions.height}
         />
       )}
 
@@ -178,18 +219,18 @@ function App() {
       <div
         className={`flex flex-col items-center justify-between h-screen mx-auto p-4 font-body text-lg transition-all duration-300 ${
           isFocus
-            ? "bg-gradient-to-b from-violet-400 via-fuchsia-200 to-violet-400 text-violet-950"
+            ? "bg-gradient-to-b from-violet-500 via-violet-300 to-violet-500 text-violet-950 dark:from-violet-950 dark:via-violet-800 dark:to-violet-950 dark:text-violet-300"
             : isBreak
-            ? "bg-gradient-to-b from-teal-300 via-lime-50 to-teal-300 text-teal-900"
-            : "bg-gradient-to-b from-slate-400 via-slate-100 to-slate-400 text-slate-900"
+            ? "bg-gradient-to-b from-teal-500 via-teal-200 to-teal-500 text-teal-950 dark:from-teal-950 dark:via-teal-800 dark:to-teal-950 dark:text-teal-300"
+            : "bg-gradient-to-b from-slate-400 via-slate-100 to-slate-400 text-slate-900 dark:from-slate-800 dark:via-slate-700 dark:to-slate-800 dark:text-slate-300"
         }`}
       >
         <div className="flex justify-between w-full">
-          <div>
+          <div className="flex flex-col items-center relative">
             {volume > 0 ? (
-              <IoVolumeHigh className="text-2xl" />
+              <IoVolumeHigh className="text-2xl mt-1" />
             ) : (
-              <IoVolumeMute className="text-2xl" />
+              <IoVolumeMute className="text-2xl mt-1" />
             )}
             <input
               type="range"
@@ -198,7 +239,7 @@ function App() {
               step=".1"
               value={volume}
               onChange={handleVolumeChange}
-              className="rotate-[-90deg] absolute top-24 left-[-40px] "
+              className="rotate-[-90deg] absolute top-24 mozilla:top-36"
             />
           </div>
           <Button handleClick={toggleTimer}>
@@ -210,48 +251,64 @@ function App() {
               ? "Resume"
               : "Start"}
           </Button>
+          <div>
+            <button onClick={toggleTheme} className="rounded-full p-1">
+              {darkMode ? (
+                <MdLightMode className="text-2xl cursor-pointer" />
+              ) : (
+                <MdModeNight className="text-2xl cursor-pointer" />
+              )}
+            </button>
+          </div>
         </div>
 
-        <div className="relative flex justify-center items-center">
-          <div className="rotate-[-90deg]">
-            <CircularProgress
-              percentage={calcPercentage(focusLeft, totalFocus)}
-              strokeColor="#5b21b6"
-            />
-          </div>
-
-          <div className="absolute w-40 h-40 rounded-full text-center flex flex-col justify-center items-center mx-auto">
-            <p>Focus</p>
-            {(isFocus || !started) && (
-              <Countdown
+        <div
+          id="timers"
+          className="flex flex-col landscape:flex-row items-center justify-center flex-grow"
+        >
+          <div className="relative flex justify-center items-center">
+            <div className="rotate-[-90deg]">
+              <CircularProgress
+                darkMode={darkMode}
                 percentage={calcPercentage(focusLeft, totalFocus)}
-                timeLeft={focusLeft}
-                fillColor="#2e1065"
-                baseColor="#6d28d9"
+                strokeColor={darkMode ? "#8b5cf6" : "#5b21b6"}
               />
-            )}
-          </div>
-        </div>
+            </div>
 
-        <p>Pomodoros Completed: {pomodoros}</p>
-
-        <div className="relative flex justify-center items-center">
-          <div className="rotate-[-90deg]">
-            <CircularProgress
-              percentage={calcPercentage(breakLeft, totalBreak)}
-              strokeColor="#115e59"
-            />
+            <div className="absolute w-40 h-40 rounded-full text-center flex flex-col justify-center items-center mx-auto">
+              <p>FOCUS</p>
+              {(isFocus || !started) && (
+                <Countdown
+                  percentage={calcPercentage(focusLeft, totalFocus)}
+                  timeLeft={focusLeft}
+                  fillColor={darkMode ? "#8b5cf6" : "#2e1065"}
+                  baseColor={darkMode ? "#a78bfa" : "#6d28d9"}
+                />
+              )}
+            </div>
           </div>
-          <div className="absolute w-40 h-40 rounded-full text-center flex flex-col justify-center items-center mx-auto">
-            <p>Break</p>
-            {isBreak && (
-              <Countdown
+
+          <p className="m-14">Pomodoros Completed: {pomodoros}</p>
+
+          <div className="relative flex justify-center items-center">
+            <div className="rotate-[-90deg]">
+              <CircularProgress
+                darkMode={darkMode}
                 percentage={calcPercentage(breakLeft, totalBreak)}
-                timeLeft={breakLeft}
-                fillColor="#042f2e"
-                baseColor="#0f766e"
+                strokeColor={darkMode ? "#2dd4bf" : "#115e59"}
               />
-            )}
+            </div>
+            <div className="absolute w-40 h-40 rounded-full text-center flex flex-col justify-center items-center mx-auto">
+              <p>BREAK</p>
+              {isBreak && (
+                <Countdown
+                  percentage={calcPercentage(breakLeft, totalBreak)}
+                  timeLeft={breakLeft}
+                  fillColor={darkMode ? "#14b8a6" : "#042f2e"}
+                  baseColor={darkMode ? "#5eead4" : "#0f766e"}
+                />
+              )}
+            </div>
           </div>
         </div>
 
@@ -279,7 +336,7 @@ function App() {
           <p>Time is in minutes. Every fourth break is a long break.</p>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
