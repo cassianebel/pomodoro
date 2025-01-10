@@ -9,17 +9,23 @@ import Countdown from "./Components/Countdown";
 import Button from "./Components/Button";
 import Modifier from "./Components/Modifier";
 
+const FOCUS_TIME = 25 * 60; // 25 minutes
+const SHORT_BREAK_TIME = 5 * 60; // 5 minutes
+const LONG_BREAK_TIME = 15 * 60; // 15 minutes
+
 function App() {
   const [darkMode, setDarkMode] = useState(false);
   const [started, setStarted] = useState(false);
-  const [totalFocus, setTotalFocus] = useState(25 * 60); // 25 minutes
-  const [focusLeft, setFocusLeft] = useState(25 * 60); // 25 minutes
-  const [isFocus, setIsFocus] = useState(false);
   const [pomodoros, setPomodoros] = useState(0);
-  const [totalBreak, setTotalBreak] = useState(5 * 60); // 5 minutes
-  const [totalShortBreak, setTotalShortBreak] = useState(5 * 60); // 5 minutes
-  const [totalLongBreak, setTotalLongBreak] = useState(15 * 60); // 15 minutes
-  const [breakLeft, setBreakLeft] = useState(0);
+  const [timer, setTimer] = useState({
+    totalFocus: FOCUS_TIME,
+    focusLeft: FOCUS_TIME,
+    totalBreak: SHORT_BREAK_TIME,
+    totalShortBreak: SHORT_BREAK_TIME,
+    totalLongBreak: LONG_BREAK_TIME,
+    breakLeft: 0,
+  });
+  const [isFocus, setIsFocus] = useState(false);
   const [isBreak, setIsBreak] = useState(false);
   const [isLongBreak, setIsLongBreak] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
@@ -60,6 +66,24 @@ function App() {
     setVolume(e.target.value);
   };
 
+  const endFocusAnimation = () => {
+    if (popRef.current) {
+      popRef.current.play(); // play the pop sound
+      setTimeout(() => popRef.current.stop(), 3000); // Stop the playback after 3 seconds
+    }
+    setShowConfetti(true); // Show the confetti
+    setTimeout(() => setShowConfetti(false), 5000); // Reset after 5 seconds
+  };
+
+  const endBreakAnimation = () => {
+    if (chimeRef.current) {
+      chimeRef.current.play(); // play the chime sound
+      setTimeout(() => chimeRef.current.stop(), 3000); // Stop the playback after 3 seconds
+    }
+    setFade(true);
+    setTimeout(() => setFade(false), 100); // Reset `in` to false after animation
+  };
+
   useEffect(() => {
     if (localStorage.getItem("theme")) {
       if (localStorage.getItem("theme") === "dark") {
@@ -89,96 +113,92 @@ function App() {
     }
   };
 
-  const endFocusAnimation = () => {
-    if (popRef.current) {
-      popRef.current.play(); // play the pop sound
-      setTimeout(() => popRef.current.stop(), 3000); // Stop the playback after 3 seconds
-    }
-    setShowConfetti(true); // Show the confetti
-    setTimeout(() => setShowConfetti(false), 5000); // Reset after 5 seconds
-  };
-
-  const endBreakAnimation = () => {
-    if (chimeRef.current) {
-      chimeRef.current.play(); // play the chime sound
-      setTimeout(() => chimeRef.current.stop(), 3000); // Stop the playback after 3 seconds
-    }
-    setFade(true);
-    setTimeout(() => setFade(false), 100); // Reset `in` to false after animation
-  };
-
   useEffect(() => {
     if (isRunning) {
       if (isFocus) {
         timerRef.current = setInterval(() => {
-          setFocusLeft((prevTime) => {
-            if (prevTime <= 1) {
+          setTimer((prevTimer) => {
+            if (prevTimer.focusLeft <= 1) {
               endFocusAnimation();
               clearInterval(timerRef.current);
               setIsFocus(false);
               setPomodoros((prevPomodoros) => prevPomodoros + 1);
               let poms = pomodoros + 1;
               if (poms % 4 === 0) {
-                setTotalBreak(totalLongBreak);
-                setBreakLeft(totalLongBreak);
+                setTimer((prevTimer) => ({
+                  ...prevTimer,
+                  breakLeft: prevTimer.totalLongBreak,
+                }));
                 setIsLongBreak(true);
               } else {
-                setTotalBreak(totalShortBreak);
-                setBreakLeft(totalShortBreak);
+                setTimer((prevTimer) => ({
+                  ...prevTimer,
+                  breakLeft: prevTimer.totalShortBreak,
+                }));
                 setIsLongBreak(false);
               }
               setIsBreak(true);
-              return 0;
+              return { ...prevTimer, focusLeft: 0 };
             }
-            return prevTime - 1;
+            return { ...prevTimer, focusLeft: prevTimer.focusLeft - 1 };
           });
         }, 1000);
       } else if (isBreak) {
         timerRef.current = setInterval(() => {
-          setBreakLeft((prevTime) => {
-            if (prevTime <= 1) {
+          setTimer((prevTimer) => {
+            if (prevTimer.breakLeft <= 1) {
               endBreakAnimation();
               clearInterval(timerRef.current);
               setIsBreak(false);
-              setFocusLeft(totalFocus);
+              setTimer((prevTimer) => ({
+                ...prevTimer,
+                focusLeft: prevTimer.totalFocus,
+              }));
               setIsFocus(true);
-              return 0;
+              return { ...prevTimer, breakLeft: 0 };
             }
-            return prevTime - 1;
+            return { ...prevTimer, breakLeft: prevTimer.breakLeft - 1 };
           });
         }, 1000);
       }
     }
     return () => clearInterval(timerRef.current);
-  }, [
-    isRunning,
-    isFocus,
-    isBreak,
-    totalFocus,
-    totalBreak,
-    totalShortBreak,
-    totalLongBreak,
-    pomodoros,
-  ]);
+  }, [isRunning, isFocus, isBreak, pomodoros]);
 
   const calcPercentage = (timeLeft, totalTime) => {
     return ((timeLeft / totalTime) * 100).toFixed(2);
   };
 
   const setFocus = (time) => {
-    setTotalFocus(time);
-    setFocusLeft(time);
+    setTimer((prevTimer) => ({
+      ...prevTimer,
+      totalFocus: time * 60,
+      focusLeft: time * 60,
+    }));
   };
 
   const setBreak = (time) => {
-    setTotalShortBreak(time);
-    setBreakLeft(time);
+    setTimer((prevTimer) => ({
+      ...prevTimer,
+      totalBreak: time * 60,
+      totalShortBreak: time * 60,
+      breakLeft: time * 60,
+    }));
   };
 
   const setLongBreak = (time) => {
-    setTotalLongBreak(time);
     if (isLongBreak) {
-      setBreakLeft(time);
+      setTimer((prevTimer) => ({
+        ...prevTimer,
+        totalBreak: time * 60,
+        totalLongBreak: time * 60,
+        breakLeft: time * 60,
+      }));
+    } else {
+      setTimer((prevTimer) => ({
+        ...prevTimer,
+        totalLongBreak: time * 60,
+      }));
     }
   };
 
@@ -270,7 +290,7 @@ function App() {
             <div className="rotate-[-90deg]">
               <CircularProgress
                 darkMode={darkMode}
-                percentage={calcPercentage(focusLeft, totalFocus)}
+                percentage={calcPercentage(timer.focusLeft, timer.totalFocus)}
                 strokeColor={darkMode ? "#8b5cf6" : "#5b21b6"}
               />
             </div>
@@ -279,8 +299,8 @@ function App() {
               <p>FOCUS</p>
               {(isFocus || !started) && (
                 <Countdown
-                  percentage={calcPercentage(focusLeft, totalFocus)}
-                  timeLeft={focusLeft}
+                  percentage={calcPercentage(timer.focusLeft, timer.totalFocus)}
+                  timeLeft={timer.focusLeft}
                   fillColor={darkMode ? "#8b5cf6" : "#2e1065"}
                   baseColor={darkMode ? "#a78bfa" : "#6d28d9"}
                 />
@@ -294,7 +314,7 @@ function App() {
             <div className="rotate-[-90deg]">
               <CircularProgress
                 darkMode={darkMode}
-                percentage={calcPercentage(breakLeft, totalBreak)}
+                percentage={calcPercentage(timer.breakLeft, timer.totalBreak)}
                 strokeColor={darkMode ? "#2dd4bf" : "#115e59"}
               />
             </div>
@@ -302,8 +322,8 @@ function App() {
               <p>BREAK</p>
               {isBreak && (
                 <Countdown
-                  percentage={calcPercentage(breakLeft, totalBreak)}
-                  timeLeft={breakLeft}
+                  percentage={calcPercentage(timer.breakLeft, timer.totalBreak)}
+                  timeLeft={timer.breakLeft}
                   fillColor={darkMode ? "#14b8a6" : "#042f2e"}
                   baseColor={darkMode ? "#5eead4" : "#0f766e"}
                 />
@@ -317,19 +337,19 @@ function App() {
             <Modifier
               label="Focus Sessions"
               name="focus"
-              value={totalFocus}
+              value={timer.totalFocus}
               handleChange={setFocus}
             />
             <Modifier
               label="Short Breaks"
               name="shortbreak"
-              value={totalShortBreak}
+              value={timer.totalShortBreak}
               handleChange={setBreak}
             />
             <Modifier
               label="Long Breaks"
               name="longbreak"
-              value={totalLongBreak}
+              value={timer.totalLongBreak}
               handleChange={setLongBreak}
             />
           </form>
