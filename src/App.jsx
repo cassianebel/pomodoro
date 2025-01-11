@@ -9,6 +9,7 @@ import CircularProgress from "./Components/CircularProgress";
 import Countdown from "./Components/Countdown";
 import Button from "./Components/Button";
 import Modifier from "./Components/Modifier";
+import Worker from "./timerWorker.js?worker";
 
 const FOCUS_TIME = localStorage.getItem("focusTime") * 60 || 25 * 60; // 25 minutes
 const SHORT_BREAK_TIME = localStorage.getItem("breakTime") * 60 || 5 * 60; // 5 minutes
@@ -42,9 +43,9 @@ function App() {
     height: window.innerHeight,
   });
 
-  const timerRef = useRef(0.5);
   const popRef = useRef(null);
   const chimeRef = useRef(null);
+  const workerRef = useRef(null);
 
   useEffect(() => {
     popRef.current = new Howl({
@@ -112,7 +113,7 @@ function App() {
 
   const toggleTimer = () => {
     setStarted(true);
-    setIsRunning(!isRunning);
+    setIsRunning((prevIsRunning) => !prevIsRunning);
     if (!isFocus && !isBreak) {
       setIsFocus(true);
     }
@@ -148,63 +149,79 @@ function App() {
   );
 
   useEffect(() => {
-    if (isRunning) {
-      if (isFocus) {
-        timerRef.current = setInterval(() => {
-          setTimer((prevTimer) => {
-            if (prevTimer.focusLeft <= 1) {
-              endFocusAnimation();
-              clearInterval(timerRef.current);
-              setIsFocus(false);
-              setSessions((prevSessions) => [
-                ...prevSessions,
-                {
-                  timestamp: new Date().toISOString(),
-                  minutes: Math.ceil(prevTimer.totalFocus / 60),
-                },
-              ]);
-              setPomodoros((prevPomodoros) => prevPomodoros + 1);
-              let poms = pomodoros + 1;
-              if (poms % 4 === 0) {
-                setTimer((prevTimer) => ({
-                  ...prevTimer,
-                  breakLeft: prevTimer.totalLongBreak,
-                }));
-                setIsLongBreak(true);
-              } else {
-                setTimer((prevTimer) => ({
-                  ...prevTimer,
-                  breakLeft: prevTimer.totalShortBreak,
-                }));
-                setIsLongBreak(false);
-              }
-              setIsBreak(true);
-              return { ...prevTimer, focusLeft: 0 };
-            }
-            return { ...prevTimer, focusLeft: prevTimer.focusLeft - 1 };
-          });
-        }, 1000);
-      } else if (isBreak) {
-        timerRef.current = setInterval(() => {
-          setTimer((prevTimer) => {
-            if (prevTimer.breakLeft <= 1) {
-              endBreakAnimation();
-              clearInterval(timerRef.current);
-              setIsBreak(false);
+    workerRef.current = new Worker();
+
+    workerRef.current.onmessage = () => {
+      setTimer((prevTimer) => {
+        if (isFocus) {
+          if (prevTimer.focusLeft <= 1) {
+            endFocusAnimation();
+            setIsFocus(false);
+            setSessions((prevSessions) => [
+              ...prevSessions,
+              {
+                timestamp: new Date().toISOString(),
+                minutes: Math.ceil(prevTimer.totalFocus / 60),
+              },
+            ]);
+            setPomodoros((prevPomodoros) => prevPomodoros + 1);
+            let poms = pomodoros + 1;
+            if (poms % 4 === 0) {
               setTimer((prevTimer) => ({
                 ...prevTimer,
-                focusLeft: prevTimer.totalFocus,
+                breakLeft: prevTimer.totalLongBreak,
               }));
-              setIsFocus(true);
-              return { ...prevTimer, breakLeft: 0 };
+              setIsLongBreak(true);
+            } else {
+              setTimer((prevTimer) => ({
+                ...prevTimer,
+                breakLeft: prevTimer.totalShortBreak,
+              }));
+              setIsLongBreak(false);
             }
-            return { ...prevTimer, breakLeft: prevTimer.breakLeft - 1 };
-          });
-        }, 1000);
+            setIsBreak(true);
+            return { ...prevTimer, focusLeft: 0 };
+          }
+          return { ...prevTimer, focusLeft: prevTimer.focusLeft - 1 };
+        } else if (isBreak) {
+          if (prevTimer.breakLeft <= 1) {
+            endBreakAnimation();
+            setIsBreak(false);
+            setTimer((prevTimer) => ({
+              ...prevTimer,
+              focusLeft: prevTimer.totalFocus,
+            }));
+            setIsFocus(true);
+            setIsRunning(true);
+            return { ...prevTimer, breakLeft: 0 };
+          }
+          return { ...prevTimer, breakLeft: prevTimer.breakLeft - 1 };
+        }
+      });
+    };
+
+    return () => {
+      workerRef.current.terminate();
+    };
+  }, [isFocus, isBreak, pomodoros]);
+
+  useEffect(() => {
+    if (workerRef.current) {
+      if (isRunning) {
+        if (isFocus || isBreak) {
+          workerRef.current.postMessage({ action: "start", interval: 1000 });
+        }
+      } else {
+        workerRef.current.postMessage({ action: "stop" });
       }
     }
-    return () => clearInterval(timerRef.current);
-  }, [isRunning, isFocus, isBreak, pomodoros]);
+
+    return () => {
+      if (workerRef.current) {
+        workerRef.current.postMessage({ action: "stop" });
+      }
+    };
+  }, [isRunning, isFocus, isBreak]);
 
   const calcPercentage = (timeLeft, totalTime) => {
     return ((timeLeft / totalTime) * 100).toFixed(2);
