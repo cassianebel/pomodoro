@@ -10,18 +10,18 @@ import Countdown from "./Components/Countdown";
 import Button from "./Components/Button";
 import Modifier from "./Components/Modifier";
 
-const FOCUS_TIME = 25 * 60; // 25 minutes
-const SHORT_BREAK_TIME = 5 * 60; // 5 minutes
-const LONG_BREAK_TIME = 15 * 60; // 15 minutes
+const FOCUS_TIME = localStorage.getItem("focusTime") * 60 || 25 * 60; // 25 minutes
+const SHORT_BREAK_TIME = localStorage.getItem("breakTime") * 60 || 5 * 60; // 5 minutes
+const LONG_BREAK_TIME = localStorage.getItem("longBreakTime") * 60 || 15 * 60; // 15 minutes
 
 function App() {
   const [darkMode, setDarkMode] = useState(false);
   const [started, setStarted] = useState(false);
-  const [pomodoros, setPomodoros] = useState(0);
+  const [pomodoros, setPomodoros] = useState(0); // used for calculating long break
   const [sessions, setSessions] = useState(() => {
     const savedSessions = localStorage.getItem("pomodoroSessions");
     return savedSessions ? JSON.parse(savedSessions) : [];
-  });
+  }); // used for calculating daily, weekly, monthly, yearly stats
   const [timer, setTimer] = useState({
     totalFocus: FOCUS_TIME,
     focusLeft: FOCUS_TIME,
@@ -211,6 +211,7 @@ function App() {
   };
 
   const setFocus = (time) => {
+    localStorage.setItem("focusTime", time);
     setTimer((prevTimer) => ({
       ...prevTimer,
       totalFocus: time * 60,
@@ -219,6 +220,7 @@ function App() {
   };
 
   const setBreak = (time) => {
+    localStorage.setItem("breakTime", time);
     setTimer((prevTimer) => ({
       ...prevTimer,
       totalBreak: time * 60,
@@ -228,6 +230,7 @@ function App() {
   };
 
   const setLongBreak = (time) => {
+    localStorage.setItem("longBreakTime", time);
     if (isLongBreak) {
       setTimer((prevTimer) => ({
         ...prevTimer,
@@ -279,9 +282,9 @@ function App() {
 
       <div
         className={`flex flex-col items-center justify-between h-screen mx-auto p-4 font-body text-lg transition-all duration-300 ${
-          isFocus
+          isFocus && isRunning
             ? "bg-gradient-to-b from-violet-500 via-violet-300 to-violet-500 text-violet-950 dark:from-violet-950 dark:via-violet-800 dark:to-violet-950 dark:text-violet-300"
-            : isBreak
+            : isBreak && isRunning
             ? "bg-gradient-to-b from-teal-500 via-teal-200 to-teal-500 text-teal-950 dark:from-teal-950 dark:via-teal-800 dark:to-teal-950 dark:text-teal-300"
             : "bg-gradient-to-b from-slate-400 via-slate-100 to-slate-400 text-slate-900 dark:from-slate-800 dark:via-slate-700 dark:to-slate-800 dark:text-slate-300"
         }`}
