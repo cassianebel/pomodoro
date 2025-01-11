@@ -298,7 +298,7 @@ function App() {
       </CSSTransition>
 
       <div
-        className={`flex flex-col items-center justify-between h-screen mx-auto p-4 font-body text-lg transition-all duration-300 ${
+        className={`flex flex-col items-center justify-between min-h-screen mx-auto p-4 font-body text-lg transition-all duration-300 ${
           isFocus && isRunning
             ? "bg-gradient-to-b from-violet-500 via-violet-300 to-violet-500 text-violet-950 dark:from-violet-950 dark:via-violet-800 dark:to-violet-950 dark:text-violet-300"
             : isBreak && isRunning
@@ -345,7 +345,7 @@ function App() {
 
         <div
           id="timers"
-          className="flex flex-col landscape:flex-row items-center justify-center flex-grow"
+          className="w-full flex flex-col landscape:flex-row items-center justify-center landscape:justify-evenly flex-grow"
         >
           <div className="relative flex justify-center items-center">
             <div className="rotate-[-90deg]">
@@ -369,7 +369,7 @@ function App() {
             </div>
           </div>
 
-          <div className="m-14">
+          <div className="mx-14 my-7">
             <h1 className="font-display text-2xl text-center">
               Pomodoros Completed
             </h1>
