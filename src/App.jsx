@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import * as dateFns from "date-fns";
 import { Howl } from "howler";
 import PartyMode from "react-confetti";
 import { CSSTransition } from "react-transition-group";
@@ -17,6 +18,10 @@ function App() {
   const [darkMode, setDarkMode] = useState(false);
   const [started, setStarted] = useState(false);
   const [pomodoros, setPomodoros] = useState(0);
+  const [sessions, setSessions] = useState(() => {
+    const savedSessions = localStorage.getItem("pomodoroSessions");
+    return savedSessions ? JSON.parse(savedSessions) : [];
+  });
   const [timer, setTimer] = useState({
     totalFocus: FOCUS_TIME,
     focusLeft: FOCUS_TIME,
@@ -114,6 +119,35 @@ function App() {
   };
 
   useEffect(() => {
+    localStorage.setItem("pomodoroSessions", JSON.stringify(sessions));
+  }, [sessions]);
+
+  const today = new Date();
+  const dailyPomodoros = sessions.filter(
+    (session) =>
+      new Date(session.timestamp).toDateString() === today.toDateString()
+  );
+
+  const startOfWeek = dateFns.startOfWeek(today);
+  const endOfWeek = dateFns.endOfWeek(today);
+  const weeklyPomodoros = sessions.filter(
+    (session) =>
+      new Date(session.timestamp) >= startOfWeek &&
+      new Date(session.timestamp) <= endOfWeek
+  );
+
+  const monthlyPomodoros = sessions.filter(
+    (session) =>
+      new Date(session.timestamp).getMonth() === today.getMonth() &&
+      new Date(session.timestamp).getFullYear() === today.getFullYear()
+  );
+
+  const yearlyPomodoros = sessions.filter(
+    (session) =>
+      new Date(session.timestamp).getFullYear() === today.getFullYear()
+  );
+
+  useEffect(() => {
     if (isRunning) {
       if (isFocus) {
         timerRef.current = setInterval(() => {
@@ -122,6 +156,13 @@ function App() {
               endFocusAnimation();
               clearInterval(timerRef.current);
               setIsFocus(false);
+              setSessions((prevSessions) => [
+                ...prevSessions,
+                {
+                  timestamp: new Date().toISOString(),
+                  minutes: Math.ceil(prevTimer.totalFocus / 60),
+                },
+              ]);
               setPomodoros((prevPomodoros) => prevPomodoros + 1);
               let poms = pomodoros + 1;
               if (poms % 4 === 0) {
@@ -308,7 +349,41 @@ function App() {
             </div>
           </div>
 
-          <p className="m-14">Pomodoros Completed: {pomodoros}</p>
+          <div className="m-14">
+            <h1 className="font-display text-2xl text-center">
+              Pomodoros Completed
+            </h1>
+            <div className="flex items-center gap-14 text-center leading-none">
+              <p>
+                <span className="font-display text-2xl">
+                  {dailyPomodoros.length}
+                </span>
+                <br />
+                Today
+              </p>
+              <p>
+                <span className="font-display text-2xl">
+                  {weeklyPomodoros.length}
+                </span>
+                <br />
+                Week
+              </p>
+              <p>
+                <span className="font-display text-2xl">
+                  {monthlyPomodoros.length}
+                </span>
+                <br />
+                {dateFns.format(today, "MMMM")}
+              </p>
+              <p>
+                <span className="font-display text-2xl">
+                  {yearlyPomodoros.length}
+                </span>
+                <br />
+                {dateFns.format(today, "yyyy")}
+              </p>
+            </div>
+          </div>
 
           <div className="relative flex justify-center items-center">
             <div className="rotate-[-90deg]">
