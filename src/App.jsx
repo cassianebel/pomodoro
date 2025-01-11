@@ -1,12 +1,11 @@
 import { useState, useEffect, useRef } from "react";
-import * as dateFns from "date-fns";
 import { Howl } from "howler";
 import PartyMode from "react-confetti";
 import { CSSTransition } from "react-transition-group";
 import { IoVolumeHigh, IoVolumeMute } from "react-icons/io5";
 import { MdModeNight, MdLightMode } from "react-icons/md";
-import CircularProgress from "./Components/CircularProgress";
-import Countdown from "./Components/Countdown";
+import CompletedSessions from "./Components/CompletedSessions";
+import Timer from "./Components/Timer";
 import Button from "./Components/Button";
 import Modifier from "./Components/Modifier";
 import Worker from "./timerWorker.js?worker";
@@ -74,20 +73,20 @@ function App() {
 
   const endFocusAnimation = () => {
     if (popRef.current) {
-      popRef.current.play(); // play the pop sound
-      setTimeout(() => popRef.current.stop(), 3000); // Stop the playback after 3 seconds
+      popRef.current.play();
+      setTimeout(() => popRef.current.stop(), 3000);
     }
-    setShowConfetti(true); // Show the confetti
-    setTimeout(() => setShowConfetti(false), 5000); // Reset after 5 seconds
+    setShowConfetti(true);
+    setTimeout(() => setShowConfetti(false), 5000);
   };
 
   const endBreakAnimation = () => {
     if (chimeRef.current) {
-      chimeRef.current.play(); // play the chime sound
-      setTimeout(() => chimeRef.current.stop(), 3000); // Stop the playback after 3 seconds
+      chimeRef.current.play();
+      setTimeout(() => chimeRef.current.stop(), 3000);
     }
     setFade(true);
-    setTimeout(() => setFade(false), 100); // Reset `in` to false after animation
+    setTimeout(() => setFade(false), 100);
   };
 
   useEffect(() => {
@@ -122,31 +121,6 @@ function App() {
   useEffect(() => {
     localStorage.setItem("pomodoroSessions", JSON.stringify(sessions));
   }, [sessions]);
-
-  const today = new Date();
-  const dailyPomodoros = sessions.filter(
-    (session) =>
-      new Date(session.timestamp).toDateString() === today.toDateString()
-  );
-
-  const startOfWeek = dateFns.startOfWeek(today);
-  const endOfWeek = dateFns.endOfWeek(today);
-  const weeklyPomodoros = sessions.filter(
-    (session) =>
-      new Date(session.timestamp) >= startOfWeek &&
-      new Date(session.timestamp) <= endOfWeek
-  );
-
-  const monthlyPomodoros = sessions.filter(
-    (session) =>
-      new Date(session.timestamp).getMonth() === today.getMonth() &&
-      new Date(session.timestamp).getFullYear() === today.getFullYear()
-  );
-
-  const yearlyPomodoros = sessions.filter(
-    (session) =>
-      new Date(session.timestamp).getFullYear() === today.getFullYear()
-  );
 
   useEffect(() => {
     workerRef.current = new Worker();
@@ -222,10 +196,6 @@ function App() {
       }
     };
   }, [isRunning, isFocus, isBreak]);
-
-  const calcPercentage = (timeLeft, totalTime) => {
-    return ((timeLeft / totalTime) * 100).toFixed(2);
-  };
 
   const setFocus = (time) => {
     localStorage.setItem("focusTime", time);
@@ -347,84 +317,31 @@ function App() {
           id="timers"
           className="w-full flex flex-col landscape:flex-row items-center justify-center landscape:justify-evenly flex-grow"
         >
-          <div className="relative flex justify-center items-center">
-            <div className="rotate-[-90deg]">
-              <CircularProgress
-                darkMode={darkMode}
-                percentage={calcPercentage(timer.focusLeft, timer.totalFocus)}
-                strokeColor={darkMode ? "#8b5cf6" : "#5b21b6"}
-              />
-            </div>
+          <Timer
+            name="FOCUS"
+            darkMode={darkMode}
+            isType={isFocus}
+            started={started}
+            typeLeft={timer.focusLeft}
+            totalType={timer.totalFocus}
+            strokeColors={["#8b5cf6", "#5b21b6"]}
+            fillColors={["#8b5cf6", "#2e1065"]}
+            baseColors={["#a78bfa", "#6d28d9"]}
+          />
 
-            <div className="absolute w-40 h-40 rounded-full text-center flex flex-col justify-center items-center mx-auto">
-              <p>FOCUS</p>
-              {(isFocus || !started) && (
-                <Countdown
-                  percentage={calcPercentage(timer.focusLeft, timer.totalFocus)}
-                  timeLeft={timer.focusLeft}
-                  fillColor={darkMode ? "#8b5cf6" : "#2e1065"}
-                  baseColor={darkMode ? "#a78bfa" : "#6d28d9"}
-                />
-              )}
-            </div>
-          </div>
+          <CompletedSessions sessions={sessions} />
 
-          <div className="mx-14 my-7">
-            <h1 className="font-display text-2xl text-center">
-              Pomodoros Completed
-            </h1>
-            <div className="flex items-center gap-14 text-center leading-none">
-              <p>
-                <span className="font-display text-2xl">
-                  {dailyPomodoros.length}
-                </span>
-                <br />
-                Today
-              </p>
-              <p>
-                <span className="font-display text-2xl">
-                  {weeklyPomodoros.length}
-                </span>
-                <br />
-                Week
-              </p>
-              <p>
-                <span className="font-display text-2xl">
-                  {monthlyPomodoros.length}
-                </span>
-                <br />
-                {dateFns.format(today, "MMMM")}
-              </p>
-              <p>
-                <span className="font-display text-2xl">
-                  {yearlyPomodoros.length}
-                </span>
-                <br />
-                {dateFns.format(today, "yyyy")}
-              </p>
-            </div>
-          </div>
-
-          <div className="relative flex justify-center items-center">
-            <div className="rotate-[-90deg]">
-              <CircularProgress
-                darkMode={darkMode}
-                percentage={calcPercentage(timer.breakLeft, timer.totalBreak)}
-                strokeColor={darkMode ? "#2dd4bf" : "#115e59"}
-              />
-            </div>
-            <div className="absolute w-40 h-40 rounded-full text-center flex flex-col justify-center items-center mx-auto">
-              <p>BREAK</p>
-              {isBreak && (
-                <Countdown
-                  percentage={calcPercentage(timer.breakLeft, timer.totalBreak)}
-                  timeLeft={timer.breakLeft}
-                  fillColor={darkMode ? "#14b8a6" : "#042f2e"}
-                  baseColor={darkMode ? "#5eead4" : "#0f766e"}
-                />
-              )}
-            </div>
-          </div>
+          <Timer
+            name="BREAK"
+            darkMode={darkMode}
+            isType={isBreak}
+            started={started}
+            typeLeft={timer.breakLeft}
+            totalType={timer.totalBreak}
+            strokeColors={["#2dd4bf", "#115e59"]}
+            fillColors={["#14b8a6", "#042f2e"]}
+            baseColors={["#5eead4", "#0f766e"]}
+          />
         </div>
 
         <div>
