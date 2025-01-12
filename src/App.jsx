@@ -30,7 +30,7 @@ function App() {
     totalLongBreak: LONG_BREAK_TIME,
     breakLeft: 0,
   });
-  const [isFocus, setIsFocus] = useState(false);
+  const [isFocus, setIsFocus] = useState(true);
   const [isBreak, setIsBreak] = useState(false);
   const [isLongBreak, setIsLongBreak] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
@@ -105,9 +105,8 @@ function App() {
   }, []);
 
   const toggleTheme = () => {
-    const preference = !darkMode;
-    setDarkMode(!darkMode);
-    localStorage.setItem("theme", preference ? "dark" : "light");
+    setDarkMode((prevDarkMode) => !prevDarkMode);
+    localStorage.setItem("theme", !darkMode ? "dark" : "light");
   };
 
   const toggleTimer = () => {
@@ -294,13 +293,7 @@ function App() {
             />
           </div>
           <Button handleClick={toggleTimer}>
-            {isRunning
-              ? "Pause"
-              : isBreak
-              ? "Resume"
-              : isFocus
-              ? "Resume"
-              : "Start"}
+            {!started ? "Start" : isRunning ? "Pause" : "Resume"}
           </Button>
           <div>
             <button onClick={toggleTheme} className="rounded-full p-1">

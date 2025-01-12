@@ -28,7 +28,7 @@ const Timer = ({
 
       <div className="absolute w-40 h-40 rounded-full text-center flex flex-col justify-center items-center mx-auto">
         <h2>{name}</h2>
-        {(isType || !started) && (
+        {isType && (
           <Countdown
             percentage={calcPercentage(typeLeft, totalType)}
             timeLeft={typeLeft}
